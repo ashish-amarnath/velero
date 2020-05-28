@@ -56,7 +56,7 @@ elif [[ "$triggeredBy" == "tags" ]]; then
     TAG=$(echo $GITHUB_REF | cut -d / -f 3)
 fi
 
-if [[ "$BRANCH" == "master" ]]; then
+if [[ "$BRANCH" == "github-actions" ]]; then
     VERSION="$BRANCH"
 elif [[ ! -z "$TAG" ]]; then
     # Tags aren't fetched by Travis on checkout, and we don't need them for master
@@ -71,7 +71,7 @@ fi
 
 # Assume we're not tagging `latest` by default, and never on master.
 TAG_LATEST=false
-if [[ "$BRANCH" == "master" ]]; then
+if [[ "$BRANCH" == "github-actions" ]]; then
     echo "Building master, not tagging latest."
 elif [[ "$TAG" == "$HIGHEST" ]]; then
     TAG_LATEST=true
@@ -85,4 +85,4 @@ echo "TAG_LATEST: $TAG_LATEST"
 
 echo "Building and pushing container images."
 
-VERSION="$VERSION" TAG_LATEST="$TAG_LATEST" make all-containers all-push all-manifests
+REGISTRY="ashishamarnath" VERSION="$VERSION" TAG_LATEST="$TAG_LATEST" make all-containers all-push all-manifests
