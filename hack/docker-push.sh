@@ -56,7 +56,7 @@ elif [[ "$triggeredBy" == "tags" ]]; then
     TAG=$(echo $GITHUB_REF | cut -d / -f 3)
 fi
 
-if [[ "$BRANCH" == "github-actions" ]]; then
+if [[ "$BRANCH" == "master" ]]; then
     VERSION="$BRANCH"
 elif [[ ! -z "$TAG" ]]; then
     # Tags aren't fetched by Travis on checkout, and we don't need them for master
@@ -71,7 +71,7 @@ fi
 
 # Assume we're not tagging `latest` by default, and never on master.
 TAG_LATEST=false
-if [[ "$BRANCH" == "github-actions" ]]; then
+if [[ "$BRANCH" == "master" ]]; then
     echo "Building master, not tagging latest."
 elif [[ "$TAG" == "$HIGHEST" ]]; then
     TAG_LATEST=true
