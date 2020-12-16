@@ -42,7 +42,8 @@ spec:
     singular: backup
   preserveUnknownFields: false
   scope: Namespaced
-  subresources: {}
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Backup is a Velero resource that respresents the capture of Kubernetes

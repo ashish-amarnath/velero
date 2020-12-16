@@ -30,6 +30,7 @@ func veleroInstall(pluginProvider string, useRestic bool) {
 	veleroInstallOptions, err = GetProviderVeleroInstallOptions(pluginProvider, cloudCredentialsFile, bslBucket, bslPrefix, bslConfig, vslConfig, getProviderPlugins(pluginProvider))
 	Expect(err).To(Succeed(), fmt.Sprintf("Failed to get Velero InstallOptions for plugin provider %s", pluginProvider))
 	veleroInstallOptions.UseRestic = useRestic
+	veleroInstallOptions.Image = veleroImage
 	Expect(InstallVeleroServer(veleroInstallOptions)).To(Succeed(), "Failed to install Velero on KinD cluster")
 }
 

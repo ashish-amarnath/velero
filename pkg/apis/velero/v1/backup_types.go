@@ -310,6 +310,8 @@ type BackupProgress struct {
 	ItemsBackedUp int `json:"itemsBackedUp,omitempty"`
 }
 
+// TODO(2.0) After converting all resources to use the runttime-controller client,
+// the genclient and k8s:deepcopy markers will no longer be needed and should be removed.
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Backup status such as InProgress/Completed"
@@ -318,6 +320,10 @@ type BackupProgress struct {
 // +kubebuilder:printcolumn:name="Created",type="date",JSONPath=".status.startTimestamp",description="Time when this backup was started"
 // +kubebuilder:printcolumn:name="Storage Location",type="string",JSONPath=".spec.storageLocation",description="Name of the Backup Storage Location where this backup should be stored"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:object:root=true
+// +kubebuilder:object:generate=true
+// +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // Backup is a Velero resource that respresents the capture of Kubernetes
 // cluster state at a point in time (API objects and associated volume state).
@@ -334,7 +340,10 @@ type Backup struct {
 	Status BackupStatus `json:"status,omitempty"`
 }
 
+// TODO(2.0) After converting all resources to use the runttime-controller client,
+// the k8s:deepcopy marker will no longer be needed and should be removed.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
 
 // BackupList is a list of Backups.
 type BackupList struct {

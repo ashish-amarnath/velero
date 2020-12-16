@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"time"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -62,6 +63,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // BackupReconciler reconciles backup objects
@@ -155,6 +158,28 @@ func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager, options controller
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&velerov1api.Backup{}).
+		WithEventFilter(
+			predicate.Funcs{
+				// Backup objects are patched with status updates as the backup is processed. These patches also trigger reconciliation.
+				// We don't want the Reconcile method to be invoked from status updates. So filter these events for Backup resources.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != "Backup" {
+						return true
+					}
+
+					oldBackup := e.ObjectOld.(*velerov1api.Backup).DeepCopy()
+					newBackup := e.ObjectNew.(*velerov1api.Backup).DeepCopy()
+
+					oldBackup.Status = velerov1api.BackupStatus{}
+					newBackup.Status = velerov1api.BackupStatus{}
+
+					oldBackup.ObjectMeta.ResourceVersion = ""
+					newBackup.ObjectMeta.ResourceVersion = ""
+
+					return !reflect.DeepEqual(oldBackup, newBackup)
+				},
+			},
+		).
 		Complete(r)
 }
 
@@ -191,7 +216,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	case "", velerov1api.BackupPhaseNew:
 		// only process new backups
 	default:
-		log.WithField("phase", backup.Status.Phase).Info("Backup is not New, doesn't need reconciliation")
+		log.WithField("phase", backup.Status.Phase).Info("Backup is not New, skipping reconciliation")
 		return ctrl.Result{}, nil
 	}
 
@@ -213,7 +238,7 @@ func (r *BackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if backupReq.Status.Phase == velerov1api.BackupPhaseFailedValidation {
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, errors.Wrapf(err, "Backup failed validation")
 	}
 	r.backupTracker.Add(req.Namespace, req.Name)
 	defer r.backupTracker.Delete(req.Namespace, req.Name)
